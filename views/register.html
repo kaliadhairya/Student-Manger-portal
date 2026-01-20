@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #88abf5;
+            background-image: url(./Il\ futuro\ delle\ app\ unificate\ in\ Windows\ 10.jpg);
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #103954;
+        }
+
+        .success-message,
+        .error-message {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            color: #2ecc71;
+        }
+
+        .error-message {
+            color: #e74c3c;
+        }
+
+        p {
+            margin-top: 15px;
+            color: #777;
+        }
+
+        a {
+            color: #5536c5;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: #2980b9;
+        }
+    </style>
+    <!-- <script src="register.js" defer></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <form id="registerForm" method="POST" action="/register">
+        <h1>Registration Form</h1>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" placeholder="Enter Username" autocomplete="on" required>
+
+        <!-- Admin/User Registration Only - Student details are added in Dashboard -->
+
+        <label for="email">E-mail:</label>
+        <input type="email" id="email" name="email" placeholder="Enter your mail" autocomplete="off" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" placeholder="Enter password" autocomplete="off" required>
+
+        <button type="submit">Submit</button>
+
+        <p class="success-message" id="success-msg"></p>
+        <p class="error-message" id="error-msg"></p>
+
+
+        <p>Already a user? <a href="./login.html">Login</a></p>
+    </form>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const msgElement = document.getElementById('success-msg');
+            const errElement = document.getElementById('error-msg');
+
+            msgElement.textContent = '';
+            errElement.textContent = '';
+
+            try {
+                const response = await axios.post('/register', {
+                    username,
+                    email,
+                    password
+                });
+
+                if (response.status === 200) {
+                    msgElement.textContent = 'Registration successful! Redirecting to login...';
+                    setTimeout(() => {
+                        window.location.href = './login.html';
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error(error);
+                errElement.textContent = error.response?.data || 'Registration failed';
+            }
+        });
+    </script>
+</body>
+
+</html>

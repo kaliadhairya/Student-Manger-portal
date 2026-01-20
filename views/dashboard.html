@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #3b3484;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        button.logout {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button.primary {
+            background-color: #351ee3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .edit-btn {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Student Management Portal</h1>
+            <button class="logout" onclick="logout()">Logout</button>
+        </header>
+
+        <div class="panel">
+            <h2>Add New Student</h2>
+            <form id="addStudentForm">
+                <input type="text" id="s_username" placeholder="Student Name" required>
+                <input type="email" id="s_email" placeholder="Email" required>
+                <input type="text" id="s_contact" placeholder="Contact No" required>
+                <input type="text" id="s_course" placeholder="Course" required>
+                <input type="number" id="s_year" placeholder="Year" required>
+                <button type="submit" class="primary">Add Student</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Registered Students</h2>
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Contact</th>
+                        <th>Course</th>
+                        <th>Year</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- populated via js -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = './login.html';
+        }
+
+        // Configure Axios global headers
+        axios.defaults.headers.common['Authorization'] = token;
+
+        async function loadStudents() {
+            try {
+                const res = await axios.get('/students');
+                const tbody = document.querySelector('#studentTable tbody');
+                tbody.innerHTML = '';
+
+                res.data.forEach(student => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                    <td>${student.username}</td>
+                    <td>${student.email}</td>
+                    <td>${student.contact}</td>
+                    <td>${student.course}</td>
+                    <td>${student.year}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editStudent('${student.username}')">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteStudent('${student.username}')">Delete</button>
+                    </td>
+                `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+                if (err.response?.status === 401) logout();
+            }
+        }
+
+        document.getElementById('addStudentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                username: document.getElementById('s_username').value,
+                email: document.getElementById('s_email').value,
+                contact: document.getElementById('s_contact').value,
+                course: document.getElementById('s_course').value,
+                year: document.getElementById('s_year').value,
+            };
+
+            try {
+                await axios.post('/students', data);
+                alert('Student Added Successfully');
+                document.getElementById('addStudentForm').reset();
+                loadStudents();
+            } catch (err) {
+                alert(err.response?.data || 'Failed to add student');
+            }
+        });
+
+        async function deleteStudent(username) {
+            if (!confirm('Are you sure?')) return;
+            try {
+                await axios.delete(`/students/${username}`);
+                loadStudents();
+            } catch (err) {
+                alert('Delete failed');
+            }
+        }
+
+        async function editStudent(username) {
+            // Simple prompt based edit for now
+            const newCourse = prompt("Enter new Course:");
+            if (newCourse) {
+                try {
+                    await axios.put(`/students/${username}`, { course: newCourse });
+                    loadStudents();
+                } catch (err) {
+                    alert('Update failed');
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = './login.html';
+        }
+
+        // Init
+        loadStudents();
+
+    </script>
+</body>
+
+</html>
